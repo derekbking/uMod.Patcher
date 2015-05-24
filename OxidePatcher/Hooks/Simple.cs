@@ -234,7 +234,6 @@ namespace OxidePatcher.Hooks
                 .Single((t) => t.FullName == "Oxide.Core.HookSystem.Hook`1");
 
             // Determine the hook return type
-            GenericInstanceType specialisedHookType;
             TypeDefinition chosenHookType;
             TypeReference hookReturnType;
             switch (ReturnBehavior)
@@ -287,27 +286,26 @@ namespace OxidePatcher.Hooks
                     throw new Exception("Unhandled ReturnBehaviour");
             }
 
+
+
             // Generate the field
-            specialisedHookType = new GenericInstanceType(chosenHookType);
-            if (hookReturnType != null) specialisedHookType.GenericArguments.Add(hookReturnType);
-            specialisedHookType.GenericArguments.Add(argType);
+            TypeReference specialisedHookType;
+            if (hookReturnType == null)
+                specialisedHookType = chosenHookType.MakeGenericInstanceType(argType);
+            else
+                specialisedHookType = chosenHookType.MakeGenericInstanceType(hookReturnType, argType);
             FieldDefinition hookField = new FieldDefinition(HookName, FieldAttributes.Public | FieldAttributes.InitOnly | FieldAttributes.Static, Import(original, context, specialisedHookType));
             if (context.Live) baseTypeDef.Fields.Add(hookField);
-            //MethodReference specialisedHookTypeCtor = original.Module.Import(specialisedHookType.Resolve().Methods.SingleOrDefault((m) => m.IsConstructor));
             MethodReference genericHookTypeCtor = specialisedHookType.Resolve().Methods.Single((m) => m.IsConstructor);
-            GenericInstanceMethod specialisedHookTypeCtor = new GenericInstanceMethod(genericHookTypeCtor);
-            for (int i = 0; i < specialisedHookType.GenericArguments.Count; i++)
-            {
-                specialisedHookTypeCtor.GenericArguments.Add(specialisedHookType.GenericArguments[i]);
-            }
+            MethodReference specialisedHookTypeCtor;
+            if (hookReturnType == null)
+                specialisedHookTypeCtor = genericHookTypeCtor.MakeHostInstanceGeneric(argType);
+            else
+                specialisedHookTypeCtor = genericHookTypeCtor.MakeHostInstanceGeneric(hookReturnType, argType);
 
             // Get hook call method
-            var hookCallMethod = chosenHookType.Resolve().Methods.Single((m) => m.Name == "Call");
-            GenericInstanceMethod specialisedHookCallMethod = new GenericInstanceMethod(hookCallMethod);
-            for (int i = 0; i < specialisedHookType.GenericArguments.Count; i++)
-            {
-                specialisedHookCallMethod.GenericArguments.Add(specialisedHookType.GenericArguments[i]);
-            }
+            MethodReference genericHookCallMethod = chosenHookType.Resolve().Methods.Single((m) => m.Name == "Call");
+            MethodReference specialisedHookCallMethod = Import(original, context, genericHookCallMethod.MakeHostInstanceGeneric(argType));
 
             // Modify all constructors to initialise the field
             if (context.Live)
@@ -317,11 +315,11 @@ namespace OxidePatcher.Hooks
                 {
                     ILWeaver ctorWeaver = new ILWeaver(ctorDef.Body);
                     ctorWeaver.Pointer = 0;
-                    //if (hookReturnType != null)
-                        //ctorWeaver.Add(ILWeaver.Ldc_I4_n(1)); // TODO: Use enum properly
-                    //ctorWeaver.Add(Instruction.Create(OpCodes.Ldstr, HookName));
-                    //ctorWeaver.Add(Instruction.Create(OpCodes.Newobj, Import(original, context, specialisedHookTypeCtor)));
-                    //ctorWeaver.Add(Instruction.Create(OpCodes.Stsfld, hookField));
+                    if (hookReturnType != null)
+                        ctorWeaver.Add(ILWeaver.Ldc_I4_n(1)); // TODO: Use enum properly
+                    ctorWeaver.Add(Instruction.Create(OpCodes.Ldstr, HookName));
+                    ctorWeaver.Add(Instruction.Create(OpCodes.Newobj, Import(original, context, specialisedHookTypeCtor)));
+                    ctorWeaver.Add(Instruction.Create(OpCodes.Stsfld, hookField));
                     ctorWeaver.Apply(ctorDef.Body);
                     ctorCount++;
                 }
@@ -338,11 +336,12 @@ namespace OxidePatcher.Hooks
                         original.Module.TypeSystem.Void);
                     
                     ILWeaver ctorIL = new ILWeaver();
-                    //if (hookReturnType != null)
-                        //ctorIL.Add(ILWeaver.Ldc_I4_n(1)); // TODO: Use enum properly
-                    //ctorIL.Add(Instruction.Create(OpCodes.Ldstr, HookName));
-                    //ctorIL.Add(Instruction.Create(OpCodes.Newobj, Import(original, context, specialisedHookTypeCtor)));
-                    //ctorIL.Add(Instruction.Create(OpCodes.Stsfld, hookField));
+                    if (hookReturnType != null)
+                        ctorIL.Add(ILWeaver.Ldc_I4_n(1)); // TODO: Use enum properly
+                    ctorIL.Add(Instruction.Create(OpCodes.Ldstr, HookName));
+                    ctorIL.Add(Instruction.Create(OpCodes.Newobj, Import(original, context, specialisedHookTypeCtor)));
+                    ctorIL.Add(Instruction.Create(OpCodes.Stsfld, hookField));
+                    
                     ctorIL.Add(Instruction.Create(OpCodes.Ret));
 
                     MethodBody ctorBody = new MethodBody(ctorDef);
@@ -371,14 +370,13 @@ namespace OxidePatcher.Hooks
             }
 
             // Get HookReturnValue and specialise as needed
-            TypeReference hookReturnValueRef = new TypeReference("Oxide.Core.HookSystem", "HookReturnValue`1", context.OxideAssembly.MainModule, chosenHookType.Scope);
-            hookReturnValueRef = Import(original, context, hookReturnValueRef);
-            GenericInstanceType specialisedHookReturnValue = null;
+            TypeReference genericHookReturnValue = new TypeReference("Oxide.Core.HookSystem", "HookReturnValue`1", context.OxideAssembly.MainModule, chosenHookType.Scope);
+            genericHookReturnValue = Import(original, context, genericHookReturnValue);
+            TypeReference specialisedHookReturnValue = null;
             FieldReference specialisedHookReturnValue_hasValue = null, specialisedHookReturnValue_value = null;
             if (hookReturnType != null)
             {
-                specialisedHookReturnValue = new GenericInstanceType(hookReturnValueRef);
-                specialisedHookReturnValue.GenericArguments.Add(hookReturnType);
+                specialisedHookReturnValue = genericHookReturnValue.MakeGenericInstanceType(hookReturnType);
 
                 specialisedHookReturnValue_hasValue = Import(original, context, new FieldReference("HasValue", original.Module.TypeSystem.Boolean, specialisedHookReturnValue));
                 specialisedHookReturnValue_value = Import(original, context, new FieldReference("Value", hookReturnType, specialisedHookReturnValue));
@@ -391,8 +389,6 @@ namespace OxidePatcher.Hooks
             {
                 hookReturnVariable = weaver.AddVariable(specialisedHookReturnValue, "hookReturn");
             }
-
-            return true;
 
             // Load the event object
             var firstInjected = weaver.Add(ILWeaver.Ldarg(null));
@@ -423,7 +419,7 @@ namespace OxidePatcher.Hooks
             }
 
             // Load the arg and call
-            weaver.Add(Instruction.Create(OpCodes.Callvirt, Import(original, context, specialisedHookCallMethod)));
+            weaver.Add(Instruction.Create(OpCodes.Callvirt, specialisedHookCallMethod));
 
             // Do we have a return value to process?
             if (hookReturnType != null)
@@ -955,9 +951,7 @@ namespace OxidePatcher.Hooks
             for (int i = 0; i < arguments.Length; i++)
             {
                 ArgInfo arg = arguments[i];
-                TypeReference oldArgType = arg.Type;
-                TypeReference transformedType = new TypeReference(oldArgType.Namespace, oldArgType.Name, oldArgType.Module, oldArgType.Scope);
-                FieldDefinition fieldDef = new FieldDefinition(arg.Name, FieldAttributes.Public | FieldAttributes.InitOnly, transformedType);
+                FieldDefinition fieldDef = new FieldDefinition(arg.Name, FieldAttributes.Public | FieldAttributes.InitOnly, arg.Type);
                 argType.Fields.Add(fieldDef);
             }
 

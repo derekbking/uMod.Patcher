@@ -121,5 +121,51 @@ namespace OxidePatcher
             }
             return new MethodSignature(exposure, method.ReturnType.FullName, method.Name, parameters);
         }
+
+        public static TypeReference MakeGenericInstanceType(
+                                  this TypeReference self,
+                                  params TypeReference[] args)
+        {
+            var reference = new GenericInstanceType(self);
+
+            for (int i = 0; i < self.GenericParameters.Count; i++)
+            {
+                reference.GenericParameters.Add(self.GenericParameters[i]);
+            }
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                reference.GenericArguments.Add(args[i]);
+            }
+
+            return reference;
+        }
+
+        public static MethodReference MakeHostInstanceGeneric(
+                                  this MethodReference self,
+                                  params TypeReference[] args)
+        {
+            var reference = new MethodReference(
+                self.Name,
+                self.ReturnType,
+                self.DeclaringType.MakeGenericInstanceType(args))
+            {
+                HasThis = self.HasThis,
+                ExplicitThis = self.ExplicitThis,
+                CallingConvention = self.CallingConvention
+            };
+
+            foreach (var parameter in self.Parameters)
+            {
+                reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+            }
+
+            foreach (var genericParam in self.GenericParameters)
+            {
+                reference.GenericParameters.Add(new GenericParameter(genericParam.Name, reference));
+            }
+
+            return reference;
+        }
     }
 }
