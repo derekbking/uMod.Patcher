@@ -144,7 +144,9 @@ namespace OxidePatcher.Views
 
             var weaver = new ILWeaver(methoddef.Body) {Module = methoddef.Module};
 
-            Hook.PreparePatch(methoddef, weaver, MainForm.OxideAssembly, false);
+            var context = new PatchContext(false, false, MainForm.OxideAssembly);
+
+            Hook.PreparePatch(methoddef, weaver, context);
             msilbefore = new TextEditorControl { Dock = DockStyle.Fill, Text = weaver.ToString() };
             codebefore = new TextEditorControl
             {
@@ -153,7 +155,7 @@ namespace OxidePatcher.Views
                 Document = { HighlightingStrategy = HighlightingManager.Manager.FindHighlighter("C#") }
             };
 
-            Hook.ApplyPatch(methoddef, weaver, MainForm.OxideAssembly, false);
+            Hook.ApplyPatch(methoddef, weaver, context);
             msilafter = new TextEditorControl { Dock = DockStyle.Fill, Text = weaver.ToString() };
             codeafter = new TextEditorControl
             {
@@ -254,11 +256,13 @@ namespace OxidePatcher.Views
             {
                 var weaver = new ILWeaver(methoddef.Body) {Module = methoddef.Module};
 
-                Hook.PreparePatch(methoddef, weaver, MainForm.OxideAssembly, false);
+                var context = new PatchContext(false, false, MainForm.OxideAssembly);
+
+                Hook.PreparePatch(methoddef, weaver, context);
                 msilbefore.Text = weaver.ToString();
                 codebefore.Text = await Decompiler.GetSourceCode(methoddef, weaver);
 
-                Hook.ApplyPatch(methoddef, weaver, MainForm.OxideAssembly, false);
+                Hook.ApplyPatch(methoddef, weaver, context);
                 msilafter.Text = weaver.ToString();
                 codeafter.Text = await Decompiler.GetSourceCode(methoddef, weaver);
             }

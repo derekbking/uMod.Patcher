@@ -111,6 +111,39 @@ namespace OxidePatcher.Hooks
     }
 
     /// <summary>
+    /// Represents data associated with the patching process
+    /// </summary>
+    public sealed class PatchContext
+    {
+        /// <summary>
+        /// Gets if UI interactions should be ignored
+        /// </summary>
+        public bool Console { get; private set; }
+
+        /// <summary>
+        /// Gets if this patch is live and can modify the target assembly
+        /// </summary>
+        public bool Live { get; private set; }
+
+        /// <summary>
+        /// Gets the Oxide assembly
+        /// </summary>
+        public AssemblyDefinition OxideAssembly { get; private set; }
+
+        /// <summary>
+        /// Initialises a new instance of the PatchContext class
+        /// </summary>
+        /// <param name="console"></param>
+        /// <param name="live"></param>
+        public PatchContext(bool console, bool live, AssemblyDefinition oxideAssembly)
+        {
+            Console = console;
+            Live = live;
+            OxideAssembly = oxideAssembly;
+        }
+    }
+
+    /// <summary>
     /// Represents a hook that is applied to single method and calls a single Oxide hook
     /// </summary>
     public abstract class Hook
@@ -179,11 +212,11 @@ namespace OxidePatcher.Hooks
         /// <param name="oxidemodule"></param>
         /// <param name="original"></param>
         /// <param name="console"></param>
-        public bool PreparePatch(MethodDefinition original, ILWeaver weaver, AssemblyDefinition oxidemodule, bool console)
+        public bool PreparePatch(MethodDefinition original, ILWeaver weaver, PatchContext context)
         {
             if (BaseHook != null)
             {
-                return BaseHook.PreparePatch(original, weaver, oxidemodule, console) && BaseHook.ApplyPatch(original, weaver, oxidemodule, console);
+                return BaseHook.PreparePatch(original, weaver, context) && BaseHook.ApplyPatch(original, weaver, context);
             }
             return true;
         }
@@ -195,7 +228,7 @@ namespace OxidePatcher.Hooks
         /// <param name="oxidemodule"></param>
         /// <param name="original"></param>
         /// <param name="console"></param>
-        public abstract bool ApplyPatch(MethodDefinition original, ILWeaver weaver, AssemblyDefinition oxidemodule, bool console);
+        public abstract bool ApplyPatch(MethodDefinition original, ILWeaver weaver, PatchContext context);
 
         /// <summary>
         /// Creates the settings view control for this hook

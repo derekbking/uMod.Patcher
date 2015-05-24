@@ -102,6 +102,9 @@ namespace OxidePatcher.Patching
 
                 var baseHooks = (from hook in manifest.Hooks where hook.BaseHook != null select hook.BaseHook).ToList();
 
+                // Create context
+                var patchContext = new Hooks.PatchContext(console, true, oxideassembly);
+
                 // Loop each hook
                 foreach (var hook in manifest.Hooks)
                 {
@@ -144,7 +147,7 @@ namespace OxidePatcher.Patching
                         try
                         {
                             // Apply
-                            bool patchApplied = hook.PreparePatch(method, weaver, oxideassembly, console) && hook.ApplyPatch(method, weaver, oxideassembly, console);
+                            bool patchApplied = hook.PreparePatch(method, weaver, patchContext) && hook.ApplyPatch(method, weaver, patchContext);
                             if (patchApplied)
                             {
                                 weaver.Apply(method.Body);

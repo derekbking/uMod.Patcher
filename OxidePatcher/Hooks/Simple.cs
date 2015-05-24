@@ -41,134 +41,316 @@ namespace OxidePatcher.Hooks
         /// </summary>
         public string ArgumentString { get; set; }
 
-        private struct ArgInfo
+        /// <summary>
+        /// Represents info about an argument to pass to the hook
+        /// </summary>
+        private abstract class ArgInfo
         {
-            public readonly string Name;
-            public readonly TypeReference Type;
+            /// <summary>
+            /// Gets the name of the argument
+            /// </summary>
+            public string Name { get; private set; }
 
-            public ArgInfo(string name, TypeReference type)
+            /// <summary>
+            /// Gets the type of the argument
+            /// </summary>
+            public abstract TypeReference Type { get; }
+
+            /// <summary>
+            /// Initialises a new instance of the ArgInfo class
+            /// </summary>
+            /// <param name="name"></param>
+            protected ArgInfo(string name)
             {
                 Name = name;
-                Type = type;
+            }
+
+            /// <summary>
+            /// Inserts instructions that loads this argument onto the stack
+            /// </summary>
+            /// <param name="weaver"></param>
+            public abstract void LoadToStack(ILWeaver weaver);
+        }
+
+        /// <summary>
+        /// Represents info about an argument backed by a parameter to pass to the hook
+        /// </summary>
+        private sealed class ArgInfoParam : ArgInfo
+        {
+            /// <summary>
+            /// Gets the parameter that backs this argument
+            /// </summary>
+            public ParameterDefinition ParamDef { get; private set; }
+
+            /// <summary>
+            /// Gets the type of the argument
+            /// </summary>
+            public override TypeReference Type { get { return ParamDef.ParameterType; } }
+
+            /// <summary>
+            /// Initialises a new instance of the ArgInfoParam class
+            /// </summary>
+            /// <param name="name"></param>
+            /// <param name="pDef"></param>
+            public ArgInfoParam(string name, ParameterDefinition pDef)
+                : base(name)
+            {
+                ParamDef = pDef;
+            }
+
+            /// <summary>
+            /// Inserts instructions that loads this argument onto the stack
+            /// </summary>
+            /// <param name="weaver"></param>
+            public override void LoadToStack(ILWeaver weaver)
+            {
+                weaver.Add(ILWeaver.Ldarg(ParamDef));
             }
         }
 
-        public override bool ApplyPatch(MethodDefinition original, ILWeaver weaver, AssemblyDefinition oxideassembly, bool console)
+        /// <summary>
+        /// Represents info about an argument backed by a variable to pass to the hook
+        /// </summary>
+        private sealed class ArgInfoVar : ArgInfo
+        {
+            /// <summary>
+            /// Gets the parameter that backs this argument
+            /// </summary>
+            public VariableDefinition VarDef { get; private set; }
+
+            /// <summary>
+            /// Gets the type of the argument
+            /// </summary>
+            public override TypeReference Type { get { return VarDef.VariableType; } }
+
+            /// <summary>
+            /// Initialises a new instance of the ArgInfoParam class
+            /// </summary>
+            /// <param name="name"></param>
+            /// <param name="pDef"></param>
+            public ArgInfoVar(string name, VariableDefinition vDef)
+                : base(name)
+            {
+                VarDef = vDef;
+            }
+
+            /// <summary>
+            /// Inserts instructions that loads this argument onto the stack
+            /// </summary>
+            /// <param name="weaver"></param>
+            public override void LoadToStack(ILWeaver weaver)
+            {
+                weaver.Ldloc(VarDef);
+            }
+        }
+
+        /// <summary>
+        /// Represents info about an argument backed by "this" to pass to the hook
+        /// </summary>
+        private sealed class ArgInfoThis : ArgInfo
+        {
+            private TypeReference theType;
+
+            /// <summary>
+            /// Gets the type of the argument
+            /// </summary>
+            public override TypeReference Type { get { return theType; } }
+
+            /// <summary>
+            /// Initialises a new instance of the ArgInfoParam class
+            /// </summary>
+            /// <param name="name"></param>
+            /// <param name="pDef"></param>
+            public ArgInfoThis(string name, TypeReference type)
+                : base(name)
+            {
+                theType = type;
+            }
+
+            /// <summary>
+            /// Inserts instructions that loads this argument onto the stack
+            /// </summary>
+            /// <param name="weaver"></param>
+            public override void LoadToStack(ILWeaver weaver)
+            {
+                weaver.Add(ILWeaver.Ldarg(null));
+            }
+        }
+
+        private TypeReference Import(MethodDefinition original, PatchContext context, TypeReference toImport)
+        {
+            if (context.Live)
+                return original.Module.Import(toImport);
+            else
+                return toImport;
+        }
+
+        private MethodReference Import(MethodDefinition original, PatchContext context, MethodReference toImport)
+        {
+            if (context.Live)
+                return original.Module.Import(toImport);
+            else
+                return toImport;
+        }
+
+        private FieldReference Import(MethodDefinition original, PatchContext context, FieldReference toImport)
+        {
+            if (context.Live)
+                return original.Module.Import(toImport);
+            else
+                return toImport;
+        }
+
+        public override bool ApplyPatch(MethodDefinition original, ILWeaver weaver, PatchContext context)
         {
             // Get the base type
             TypeDefinition baseTypeDef = original.DeclaringType;
 
             // Generate the arg type
-            ArgInfo[] toPass = null;
-            switch (ArgumentBehavior)
+            string retValue = null;
+            ArgInfo[] toPass = GenerateArgInfos(original, out retValue);
+            TypeReference argType;
+            if (toPass.Length == 0)
             {
-                case ArgumentBehavior.None:
-                    toPass = new ArgInfo[0];
-                    break;
-                case ArgumentBehavior.JustParams:
-                    toPass = original.Parameters
-                        .Select((p) => new ArgInfo(p.Name, p.ParameterType))
-                        .ToArray();
-                    break;
-                case ArgumentBehavior.JustThis:
-                    toPass = new ArgInfo[] { new ArgInfo("Subject", baseTypeDef) };
-                    break;
-                case ArgumentBehavior.All:
-                    toPass = original.Parameters
-                        .Select((p) => new ArgInfo(p.Name, p.ParameterType))
-                        .Concat(new ArgInfo[] { new ArgInfo("Subject", baseTypeDef) })
-                        .ToArray();
-                    break;
-                case ArgumentBehavior.UseArgumentString:
-                    string retValue;
-                    string[] argsToUse = ParseArgumentString(out retValue);
-                    toPass = new ArgInfo[argsToUse.Length];
-                    for (int i = 0; i < argsToUse.Length; i++)
-                    {
-                        string argToUse = argsToUse[i];
-                        if (argToUse == "this")
-                        {
-                            toPass[i] = new ArgInfo("Subject", baseTypeDef);
-                        }
-                        else
-                        {
-                            char src = argToUse[0];
-                            int val = int.Parse(argToUse.Substring(1));
-                            if (src == 'l' || src == 'v')
-                            {
-                                var variable = original.Body.Variables[val];
-                                if (string.IsNullOrEmpty(variable.Name))
-                                    toPass[i] = new ArgInfo(string.Format("arg_{0}", variable.VariableType.Name), variable.VariableType);
-                                else
-                                    toPass[i] = new ArgInfo(variable.Name, variable.VariableType);
-                            }
-                            else if (src == 'a' || src == 'p')
-                            {
-                                var param = original.Parameters[val];
-                                toPass[i] = new ArgInfo(param.Name, param.ParameterType);
-                            }
-                            else
-                                throw new Exception("Invalid argument string or something");
-                        }
-                    }
-                    break;
-                default:
-                    throw new Exception("Unhandled ArgumentBehaviour");
+                argType = Import(original, context, context.OxideAssembly.MainModule.Types
+                    .Single((t) => t.FullName == "Oxide.Core.HookSystem.NoArg"));
             }
-            TypeDefinition argType = CreateHookArgType(oxideassembly, string.Format("{0}Arg", HookName), baseTypeDef, toPass);
-            baseTypeDef.NestedTypes.Add(argType);
+            else
+            {
+                TypeDefinition argTypeDef = CreateHookArgType(context.OxideAssembly, string.Format("{0}Arg", HookName), baseTypeDef, toPass);
+                if (context.Live)
+                {
+                    //baseTypeDef.NestedTypes.Add(argTypeDef);
+                    if (!original.Module.Types.Contains(argTypeDef))
+                        original.Module.Types.Add(argTypeDef);
+                }
+                argType = argTypeDef;
+            }
 
-            // Generate the hook class member
-            TypeDefinition baseHookType = oxideassembly.MainModule.Types
+            // Get the potential hook types
+            TypeDefinition baseHookType2 = context.OxideAssembly.MainModule.Types
                 .Single((t) => t.FullName == "Oxide.Core.HookSystem.Hook`2");
+            TypeDefinition baseHookType1 = context.OxideAssembly.MainModule.Types
+                .Single((t) => t.FullName == "Oxide.Core.HookSystem.Hook`1");
 
-            // Generate the hook member
-            GenericInstanceType specialisedHookType = new GenericInstanceType(baseHookType);
+            // Determine the hook return type
+            GenericInstanceType specialisedHookType;
+            TypeDefinition chosenHookType;
+            TypeReference hookReturnType;
             switch (ReturnBehavior)
             {
                 case ReturnBehavior.Continue:
-                    specialisedHookType.GenericArguments.Add(oxideassembly.MainModule.TypeSystem.Object);
+                    // Take no action, so ignore the hook's return value
+                    // Actually this will select the returnless hook
+                    chosenHookType = baseHookType1;
+                    hookReturnType = null;
                     break;
                 case ReturnBehavior.ExitWhenValidType:
-                    specialisedHookType.GenericArguments.Add(original.ReturnType);
+                    // When set, return this method's return type
+                    chosenHookType = baseHookType2;
+                    hookReturnType = original.ReturnType;
                     break;
                 case ReturnBehavior.ModifyRefArg:
-                    specialisedHookType.GenericArguments.Add(oxideassembly.MainModule.TypeSystem.Object);
+                    // When set, modify the byref argument
+                    // TODO: Make this use the arg and not just return type of original
+                    chosenHookType = baseHookType2;
+                    hookReturnType = original.ReturnType;
                     break;
                 case ReturnBehavior.UseArgumentString:
-                    specialisedHookType.GenericArguments.Add(oxideassembly.MainModule.TypeSystem.Object);
+                    if (retValue != null)
+                    {
+                        // Do what the arg string says
+                        chosenHookType = baseHookType2;
+                        char src = retValue[0];
+                        int val = int.Parse(retValue.Substring(1));
+                        if (src == 'l' || src == 'v')
+                        {
+                            var variable = original.Body.Variables[val];
+                            hookReturnType = variable.VariableType;
+                        }
+                        else if (src == 'a' || src == 'p')
+                        {
+                            var param = original.Parameters[val];
+                            hookReturnType = param.ParameterType;
+                        }
+                        else
+                            hookReturnType = null;
+                    }
+                    else
+                    {
+                        // This hook's ReturnBehaviour is misconfigured, but let it slide anyway because we're nice
+                        chosenHookType = baseHookType1;
+                        hookReturnType = null;
+                    }
                     break;
                 default:
                     throw new Exception("Unhandled ReturnBehaviour");
             }
+
+            // Generate the field
+            specialisedHookType = new GenericInstanceType(chosenHookType);
+            if (hookReturnType != null) specialisedHookType.GenericArguments.Add(hookReturnType);
             specialisedHookType.GenericArguments.Add(argType);
-            FieldDefinition hookField = new FieldDefinition(Name, FieldAttributes.Public | FieldAttributes.InitOnly, original.Module.Import(specialisedHookType));
-            baseTypeDef.Fields.Add(hookField);
-            MethodReference specialisedHookTypeCtor = original.Module.Import(specialisedHookType.Resolve().Methods.SingleOrDefault((m) => m.IsConstructor));
+            FieldDefinition hookField = new FieldDefinition(HookName, FieldAttributes.Public | FieldAttributes.InitOnly | FieldAttributes.Static, Import(original, context, specialisedHookType));
+            if (context.Live) baseTypeDef.Fields.Add(hookField);
+            //MethodReference specialisedHookTypeCtor = original.Module.Import(specialisedHookType.Resolve().Methods.SingleOrDefault((m) => m.IsConstructor));
+            MethodReference genericHookTypeCtor = specialisedHookType.Resolve().Methods.Single((m) => m.IsConstructor);
+            GenericInstanceMethod specialisedHookTypeCtor = new GenericInstanceMethod(genericHookTypeCtor);
+            for (int i = 0; i < specialisedHookType.GenericArguments.Count; i++)
+            {
+                specialisedHookTypeCtor.GenericArguments.Add(specialisedHookType.GenericArguments[i]);
+            }
+
+            // Get hook call method
+            var hookCallMethod = chosenHookType.Resolve().Methods.Single((m) => m.Name == "Call");
+            GenericInstanceMethod specialisedHookCallMethod = new GenericInstanceMethod(hookCallMethod);
+            for (int i = 0; i < specialisedHookType.GenericArguments.Count; i++)
+            {
+                specialisedHookCallMethod.GenericArguments.Add(specialisedHookType.GenericArguments[i]);
+            }
 
             // Modify all constructors to initialise the field
-            int ctorCount = 0;
-            foreach (MethodDefinition ctorDef in baseTypeDef.Methods.Where((m) => m.IsConstructor))
+            if (context.Live)
             {
-                ILWeaver ctorWeaver = new ILWeaver(ctorDef.Body);
-                ctorWeaver.Pointer = 0;
-                ctorWeaver.Add(ILWeaver.Ldarg(null));
-                ctorWeaver.Add(ILWeaver.Ldc_I4_n(0));
-                ctorWeaver.Add(Instruction.Create(OpCodes.Ldstr, Name));
-                ctorWeaver.Add(Instruction.Create(OpCodes.Newobj, specialisedHookTypeCtor));
-                ctorWeaver.Add(Instruction.Create(OpCodes.Stfld, hookField));
-                ctorWeaver.Apply(ctorDef.Body);
-                ctorCount++;
-            }
-            if (ctorCount == 0)
-            {
-                throw new Exception("Target hook class has no constructors!");
-            }
+                int ctorCount = 0;
+                foreach (MethodDefinition ctorDef in baseTypeDef.Methods.Where((m) => m.IsConstructor && m.IsStatic))
+                {
+                    ILWeaver ctorWeaver = new ILWeaver(ctorDef.Body);
+                    ctorWeaver.Pointer = 0;
+                    //if (hookReturnType != null)
+                        //ctorWeaver.Add(ILWeaver.Ldc_I4_n(1)); // TODO: Use enum properly
+                    //ctorWeaver.Add(Instruction.Create(OpCodes.Ldstr, HookName));
+                    //ctorWeaver.Add(Instruction.Create(OpCodes.Newobj, Import(original, context, specialisedHookTypeCtor)));
+                    //ctorWeaver.Add(Instruction.Create(OpCodes.Stsfld, hookField));
+                    ctorWeaver.Apply(ctorDef.Body);
+                    ctorCount++;
+                }
+                if (ctorCount == 0)
+                {
+                    // Emit a new static constructor
+                    MethodDefinition ctorDef = new MethodDefinition(".cctor",
+                        MethodAttributes.Private |
+                        MethodAttributes.Static |
+                        MethodAttributes.ReuseSlot |
+                        MethodAttributes.HideBySig |
+                        MethodAttributes.SpecialName |
+                        MethodAttributes.RTSpecialName,
+                        original.Module.TypeSystem.Void);
+                    
+                    ILWeaver ctorIL = new ILWeaver();
+                    //if (hookReturnType != null)
+                        //ctorIL.Add(ILWeaver.Ldc_I4_n(1)); // TODO: Use enum properly
+                    //ctorIL.Add(Instruction.Create(OpCodes.Ldstr, HookName));
+                    //ctorIL.Add(Instruction.Create(OpCodes.Newobj, Import(original, context, specialisedHookTypeCtor)));
+                    //ctorIL.Add(Instruction.Create(OpCodes.Stsfld, hookField));
+                    ctorIL.Add(Instruction.Create(OpCodes.Ret));
 
-            // Get the call hook method
-            MethodDefinition callhookmethod = oxideassembly.MainModule.Types
-                .Single((t) => t.FullName == "Oxide.Core.Interface")
-                .Methods.Single((m) => m.IsStatic && m.Name == "CallHook");
+                    MethodBody ctorBody = new MethodBody(ctorDef);
+                    ctorIL.Apply(ctorBody);
+                    ctorDef.Body = ctorBody;
+                    if (context.Live) baseTypeDef.Methods.Add(ctorDef);
+                }
+            }
 
             // Start injecting where requested
             weaver.Pointer = InjectionIndex;
@@ -181,19 +363,126 @@ namespace OxidePatcher.Hooks
             }
             catch (ArgumentOutOfRangeException)
             {
-                if (console == false)
+                if (!context.Console)
                 {
                     MessageBox.Show(string.Format("The injection index specified for {0} is invalid!", this.Name), "Invalid Index", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 return false;
             }
 
-            // Load the hook name
+            // Get HookReturnValue and specialise as needed
+            TypeReference hookReturnValueRef = new TypeReference("Oxide.Core.HookSystem", "HookReturnValue`1", context.OxideAssembly.MainModule, chosenHookType.Scope);
+            hookReturnValueRef = Import(original, context, hookReturnValueRef);
+            GenericInstanceType specialisedHookReturnValue = null;
+            FieldReference specialisedHookReturnValue_hasValue = null, specialisedHookReturnValue_value = null;
+            if (hookReturnType != null)
+            {
+                specialisedHookReturnValue = new GenericInstanceType(hookReturnValueRef);
+                specialisedHookReturnValue.GenericArguments.Add(hookReturnType);
 
-            // Push the arguments array to the stack and make the call
-            VariableDefinition argsvar;
-            var firstinjected = PushArgsArray(original, weaver, out argsvar);
-            var hookname = weaver.Add(Instruction.Create(OpCodes.Ldstr, HookName));
+                specialisedHookReturnValue_hasValue = Import(original, context, new FieldReference("HasValue", original.Module.TypeSystem.Boolean, specialisedHookReturnValue));
+                specialisedHookReturnValue_value = Import(original, context, new FieldReference("Value", hookReturnType, specialisedHookReturnValue));
+            }
+
+
+            // Add a variable for the return value
+            VariableDefinition hookReturnVariable = null;
+            if (hookReturnType != null)
+            {
+                hookReturnVariable = weaver.AddVariable(specialisedHookReturnValue, "hookReturn");
+            }
+
+            return true;
+
+            // Load the event object
+            var firstInjected = weaver.Add(ILWeaver.Ldarg(null));
+            weaver.Add(Instruction.Create(OpCodes.Ldfld, hookField));
+
+            // Do we have args to pass?
+            if (toPass.Length == 0)
+            {
+                // Add variable for the arg
+                VariableDefinition hookArgVariable = weaver.AddVariable(argType, "hookArg");
+
+                // Load empty NoArg
+                weaver.Add(Instruction.Create(OpCodes.Ldloca_S, hookArgVariable));
+                weaver.Add(Instruction.Create(OpCodes.Initobj, argType));
+                weaver.Ldloc(hookArgVariable);
+            }
+            else
+            {
+                // Load all args to stack
+                for (int i = 0; i < toPass.Length; i++)
+                {
+                    toPass[i].LoadToStack(weaver);
+                }
+
+                // Initialise the arg struct
+                var ctor = Import(original, context, argType.Resolve().Methods.Single((m) => m.IsConstructor));
+                weaver.Add(Instruction.Create(OpCodes.Newobj, ctor));
+            }
+
+            // Load the arg and call
+            weaver.Add(Instruction.Create(OpCodes.Callvirt, Import(original, context, specialisedHookCallMethod)));
+
+            // Do we have a return value to process?
+            if (hookReturnType != null)
+            {
+                // Store in the return variable
+                weaver.Stloc(hookReturnVariable);
+
+                // Read HasValue
+                weaver.Ldloc(hookReturnVariable);
+                var ins = weaver.Add(Instruction.Create(OpCodes.Ldfld, specialisedHookReturnValue_hasValue));
+
+                // If it's false, always jump to the next non-injected instruction
+                weaver.Add(Instruction.Create(OpCodes.Brfalse_S, ins.Next));
+
+                // Process return type
+                switch (ReturnBehavior)
+                {
+                    case ReturnBehavior.ExitWhenValidType:
+                        // Read value
+                        //weaver.Ldloc(hookReturnVariable);
+                        //weaver.Add(Instruction.Create(OpCodes.Ldfld, specialisedHookReturnValue_value));
+
+                        // Jump to the return
+                        //weaver.Add(Instruction.Create(OpCodes.Ret));
+                        weaver.Add(Instruction.Create(OpCodes.Nop));
+                        break;
+                    case ReturnBehavior.Continue:
+                        // Shouldn't reach here
+                        weaver.Add(Instruction.Create(OpCodes.Nop));
+                        break;
+                    case ReturnBehavior.ModifyRefArg:
+                        // TODO: This
+                        weaver.Add(Instruction.Create(OpCodes.Nop));
+                        break;
+                    case ReturnBehavior.UseArgumentString:
+                        // Read value
+                        weaver.Ldloc(hookReturnVariable);
+                        weaver.Add(Instruction.Create(OpCodes.Ldfld, specialisedHookReturnValue_value));
+
+                        // Store in whatever the arg string says to
+                        char src = retValue[0];
+                        int val = int.Parse(retValue.Substring(1));
+                        if (src == 'l' || src == 'v')
+                        {
+                            var variable = original.Body.Variables[val];
+                            weaver.Stloc(variable);
+                        }
+                        else if (src == 'a' || src == 'p')
+                        {
+                            var param = original.Parameters[val];
+                            weaver.Starg(param);
+                        }
+                        else
+                            weaver.Add(Instruction.Create(OpCodes.Nop));
+                        break;
+                }
+            }
+
+            /*var hookname = weaver.Add(Instruction.Create(OpCodes.Ldstr, HookName));
             if (firstinjected == null) firstinjected = hookname;
             if (argsvar != null)
                 weaver.Ldloc(argsvar);
@@ -202,7 +491,7 @@ namespace OxidePatcher.Hooks
             weaver.Add(Instruction.Create(OpCodes.Call, original.Module.Import(callhookmethod)));
 
             // Deal with the return value
-            DealWithReturnValue(original, argsvar, weaver);
+            DealWithReturnValue(original, argsvar, weaver);*/
 
             // Find all instructions which pointed to the existing and redirect them
             for (int i = 0; i < weaver.Instructions.Count; i++)
@@ -213,10 +502,79 @@ namespace OxidePatcher.Hooks
                     // Check if the instruction lies within our injection range
                     // If it does, it's an instruction we just injected so we don't want to edit it
                     if (i < InjectionIndex || i > weaver.Pointer)
-                        ins.Operand = firstinjected;
+                        ins.Operand = firstInjected;
                 }
             }
             return true;
+        }
+
+        private ArgInfo[] GenerateArgInfos(MethodDefinition method, out string retValue)
+        {
+            // Define variables
+            ArgInfo[] toPass = null;
+
+            // Switch on argument behaviour
+            switch (ArgumentBehavior)
+            {
+                case ArgumentBehavior.None: // No arguments to pass on
+                    toPass = new ArgInfo[0];
+                    retValue = null;
+                    break;
+                case ArgumentBehavior.JustParams: // Pass on all the method parameters
+                    toPass = method.Parameters
+
+                        .Select((p) => new ArgInfoParam(p.Name, p))
+                        .ToArray();
+                    retValue = null;
+                    break;
+                case ArgumentBehavior.JustThis: // Just pass on this (parameter 0)
+                    toPass = new ArgInfo[] { new ArgInfoThis("Subject", method.DeclaringType) };
+                    retValue = null;
+                    break;
+                case ArgumentBehavior.All:
+                    toPass = new ArgInfo[] { new ArgInfoThis("Subject", method.DeclaringType) }
+                        .Concat(method.Parameters.Select((p) => new ArgInfoParam(p.Name, p)))
+                        .ToArray();
+                    retValue = null;
+                    break;
+                case ArgumentBehavior.UseArgumentString:
+                    string[] argsToUse = ParseArgumentString(out retValue);
+                    toPass = new ArgInfo[argsToUse.Length];
+                    for (int i = 0; i < argsToUse.Length; i++)
+                    {
+                        string argToUse = argsToUse[i];
+                        if (argToUse == "this")
+                        {
+                            toPass[i] = new ArgInfoThis("Subject", method.DeclaringType);
+                        }
+                        else
+                        {
+                            char src = argToUse[0];
+                            int val = int.Parse(argToUse.Substring(1));
+                            if (src == 'l' || src == 'v')
+                            {
+                                var variable = method.Body.Variables[val];
+                                if (string.IsNullOrEmpty(variable.Name))
+                                    toPass[i] = new ArgInfoVar(string.Format("arg_{0}", variable.VariableType.Name), variable);
+                                else
+                                    toPass[i] = new ArgInfoVar(variable.Name, variable);
+                            }
+                            else if (src == 'a' || src == 'p')
+                            {
+                                var param = method.Parameters[val];
+                                toPass[i] = new ArgInfoParam(param.Name, param);
+                            }
+                            else
+                                throw new Exception("Invalid argument string or something");
+                        }
+                    }
+                    break;
+                default:
+                    throw new Exception("Unhandled ArgumentBehaviour");
+            }
+
+            // Return
+            return toPass;
         }
 
         private Instruction PushArgsArray(MethodDefinition method, ILWeaver weaver, out VariableDefinition argsvar)
@@ -551,26 +909,55 @@ namespace OxidePatcher.Hooks
             return args;
         }
 
+        private bool CheckHookArgTypeMatch(TypeDefinition argType, ArgInfo[] arguments)
+        {
+            if (argType.Fields.Count != arguments.Length) return false;
+            for (int i = 0; i < arguments.Length; i++)
+            {
+                TypeReference typeRef = arguments[i].Type;
+                if (typeRef.FullName != argType.Fields[i].FieldType.FullName)
+                    return false;
+            }
+            return true;
+        }
+
         private TypeDefinition CreateHookArgType(AssemblyDefinition oxideAssembly, string name, TypeDefinition parent, ArgInfo[] arguments)
         {
+            // Check for existing type
+            TypeDefinition existingArgType = parent.Module.Types.SingleOrDefault((t) => t.Name == name && t.Namespace == "Oxide.HookArgs");
+            if (existingArgType != null)
+            {
+                // What do we do?
+                // If it matches up to our definition, just use it
+                // Otherwise, change the name to have some number at the end
+                if (CheckHookArgTypeMatch(existingArgType, arguments)) return existingArgType;
+
+                int i = 1;
+                while (parent.Module.Types.Any((t) => t.Name == string.Format("{0}{1}", name, i) && t.Namespace == "Oxide.HookArgs")) i++;
+                name = string.Format("{0}{1}", name, i);
+            }
+
+            // Get base type
+            TypeReference valueTypeRef = parent.Module.Import(new TypeReference("System", "ValueType", parent.Module.TypeSystem.Object.Module, parent.Module.TypeSystem.Object.Scope));
+
             // Create the new type definition
-            TypeDefinition argType = new TypeDefinition(parent.Namespace, name,
+            TypeDefinition argType = new TypeDefinition("Oxide.HookArgs", name,
                 TypeAttributes.Class |
-                TypeAttributes.NestedPublic |
+                TypeAttributes.Public |
+                TypeAttributes.AnsiClass |
                 TypeAttributes.SequentialLayout |
                 TypeAttributes.AnsiClass |
                 TypeAttributes.BeforeFieldInit |
                 TypeAttributes.Sealed,
-                new TypeReference("System", "ValueType",
-                    oxideAssembly.MainModule.TypeSystem.Object.Module,
-                    oxideAssembly.MainModule.TypeSystem.Object.Scope)
-                    );
+                valueTypeRef);
 
             // Add the arguments as fields
             for (int i = 0; i < arguments.Length; i++)
             {
                 ArgInfo arg = arguments[i];
-                FieldDefinition fieldDef = new FieldDefinition(arg.Name, FieldAttributes.Public | FieldAttributes.InitOnly, arg.Type);
+                TypeReference oldArgType = arg.Type;
+                TypeReference transformedType = new TypeReference(oldArgType.Namespace, oldArgType.Name, oldArgType.Module, oldArgType.Scope);
+                FieldDefinition fieldDef = new FieldDefinition(arg.Name, FieldAttributes.Public | FieldAttributes.InitOnly, transformedType);
                 argType.Fields.Add(fieldDef);
             }
 
@@ -585,7 +972,7 @@ namespace OxidePatcher.Hooks
             ILWeaver ctorIL = new ILWeaver();
             for (int i = 0; i < arguments.Length; i++)
             {
-                ParameterDefinition pDef = new ParameterDefinition(arguments[i].Name, ParameterAttributes.None, arguments[i].Type);
+                ParameterDefinition pDef = new ParameterDefinition(arguments[i].Name, ParameterAttributes.None, parent.Module.Import(arguments[i].Type));
                 ctorDef.Parameters.Add(pDef);
                 ctorIL.Add(Instruction.Create(OpCodes.Ldarg_0));
                 ctorIL.Add(ILWeaver.Ldarg(pDef));

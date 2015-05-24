@@ -21,9 +21,9 @@ namespace OxidePatcher.Hooks
         /// </summary>
         public int InjectionIndex { get; set; }
 
-        public override bool ApplyPatch(MethodDefinition original, ILWeaver weaver, AssemblyDefinition oxideassembly, bool console)
+        public override bool ApplyPatch(MethodDefinition original, ILWeaver weaver, PatchContext context)
         {
-            MethodDefinition initoxidemethod = oxideassembly.MainModule.Types
+            MethodDefinition initoxidemethod = context.OxideAssembly.MainModule.Types
                 .Single((t) => t.FullName == "Oxide.Core.Interface")
                 .Methods.Single((m) => m.IsStatic && m.Name == "Initialize");
 
@@ -38,7 +38,7 @@ namespace OxidePatcher.Hooks
             }
             catch (ArgumentOutOfRangeException)
             {
-                if (console == false)
+                if (!context.Console)
                 {
                     MessageBox.Show(string.Format("The injection index specified for {0} is invalid!", this.Name), "Invalid Index", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
