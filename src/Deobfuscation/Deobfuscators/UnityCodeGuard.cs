@@ -1,12 +1,12 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
-using Oxide.Patcher.Patching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Umod.Patcher.Patching;
 
-namespace Oxide.Patcher.Deobfuscation
+namespace Umod.Patcher.Deobfuscation
 {
     /// <summary>
     /// A deobfuscator capable of deobfuscating assemblies obfsucated by CodeGuard for Unity
@@ -147,11 +147,7 @@ namespace Oxide.Patcher.Deobfuscation
         {
             // Build the refmap
             refcounts = new Dictionary<MethodReference, int>();
-            foreach (Instruction inst in GetTypes(assembly)
-                .SelectMany(t => t.Methods)
-                .Where(m => m.HasBody)
-                .SelectMany(m => m.Body.Instructions)
-                )
+            foreach (Instruction inst in GetTypes(assembly).SelectMany(t => t.Methods).Where(m => m.HasBody).SelectMany(m => m.Body.Instructions))
             {
                 // Get method
                 MethodReference method = inst.Operand as MethodReference;
@@ -241,9 +237,7 @@ namespace Oxide.Patcher.Deobfuscation
             }
 
             // Deal with property names
-            PropertyDefinition[] properties = typedef.Properties
-                .Where(f => IdentifyObfuscatedName(f.Name))
-                .ToArray();
+            PropertyDefinition[] properties = typedef.Properties.Where(f => IdentifyObfuscatedName(f.Name)).ToArray();
             Array.Sort(properties, (a, b) =>
             {
                 // Sort firstly by type, then by obfuscated name
@@ -264,9 +258,7 @@ namespace Oxide.Patcher.Deobfuscation
             }
 
             // Deal with method names
-            MethodDefinition[] methods = typedef.Methods
-                .Where(f => IdentifyObfuscatedName(f.Name))
-                .ToArray();
+            MethodDefinition[] methods = typedef.Methods.Where(f => IdentifyObfuscatedName(f.Name)).ToArray();
             Array.Sort(methods, (a, b) =>
             {
                 // Sort by the following in order: return type, parameter count, parameter types, obfuscated name
@@ -302,9 +294,7 @@ namespace Oxide.Patcher.Deobfuscation
 
             // Deal with proxy methods
             HashSet<MethodDefinition> toremove = new HashSet<MethodDefinition>();
-            foreach (MethodDefinition method in typedef.Methods
-                .Where(m => m.HasBody)
-                )
+            foreach (MethodDefinition method in typedef.Methods.Where(m => m.HasBody))
             {
                 // Identify a proxy call via IL
                 Collection<Instruction> instructions = method.Body.Instructions;

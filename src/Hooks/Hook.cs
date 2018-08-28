@@ -1,15 +1,15 @@
 ﻿using Mono.Cecil;
 using Newtonsoft.Json;
-using Oxide.Patcher.Patching;
-using Oxide.Patcher.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using Umod.Patcher.Patching;
+using Umod.Patcher.Views;
 
-namespace Oxide.Patcher.Hooks
+namespace Umod.Patcher.Hooks
 {
     public enum MethodExposure { Private, Protected, Public, Internal }
 

@@ -1,10 +1,10 @@
 ﻿using Mono.Cecil;
-using Oxide.Patcher.Modifiers;
+using Umod.Patcher.Modifiers;
 using System;
 using System.Text;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     public partial class FieldAndPropertyViewControl : UserControl
     {

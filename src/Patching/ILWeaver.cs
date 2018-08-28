@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Oxide.Patcher.Patching
+namespace Umod.Patcher.Patching
 {
     /// <summary>
     /// Represents a set of modifiable instructions

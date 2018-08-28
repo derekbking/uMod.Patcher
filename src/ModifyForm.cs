@@ -1,15 +1,15 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Oxide.Patcher.Fields;
-using Oxide.Patcher.Hooks;
-using Oxide.Patcher.Patching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
+using Umod.Patcher.Fields;
+using Umod.Patcher.Hooks;
+using Umod.Patcher.Patching;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     public partial class ModifyForm : Form
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     partial class PatcherForm
     {
@@ -117,7 +117,7 @@ namespace Oxide.Patcher
             // 
             // newproject
             // 
-            this.newproject.Image = global::Oxide.Patcher.Properties.Resources.book_add;
+            this.newproject.Image = global::Umod.Patcher.Properties.Resources.book_add;
             this.newproject.Name = "newproject";
             this.newproject.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
             this.newproject.Size = new System.Drawing.Size(186, 22);
@@ -126,7 +126,7 @@ namespace Oxide.Patcher
             // 
             // openproject
             // 
-            this.openproject.Image = global::Oxide.Patcher.Properties.Resources.book_go;
+            this.openproject.Image = global::Umod.Patcher.Properties.Resources.book_go;
             this.openproject.Name = "openproject";
             this.openproject.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
             this.openproject.Size = new System.Drawing.Size(186, 22);
@@ -151,7 +151,7 @@ namespace Oxide.Patcher
             // 
             // exit
             // 
-            this.exit.Image = global::Oxide.Patcher.Properties.Resources.door_in;
+            this.exit.Image = global::Umod.Patcher.Properties.Resources.door_in;
             this.exit.Name = "exit";
             this.exit.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
             this.exit.Size = new System.Drawing.Size(186, 22);
@@ -174,7 +174,7 @@ namespace Oxide.Patcher
             // newprojecttool
             // 
             this.newprojecttool.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.newprojecttool.Image = global::Oxide.Patcher.Properties.Resources.book_add;
+            this.newprojecttool.Image = global::Umod.Patcher.Properties.Resources.book_add;
             this.newprojecttool.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.newprojecttool.Name = "newprojecttool";
             this.newprojecttool.Size = new System.Drawing.Size(23, 22);
@@ -184,7 +184,7 @@ namespace Oxide.Patcher
             // openprojecttool
             // 
             this.openprojecttool.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.openprojecttool.Image = global::Oxide.Patcher.Properties.Resources.book_go;
+            this.openprojecttool.Image = global::Umod.Patcher.Properties.Resources.book_go;
             this.openprojecttool.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.openprojecttool.Name = "openprojecttool";
             this.openprojecttool.Size = new System.Drawing.Size(23, 22);
@@ -200,7 +200,7 @@ namespace Oxide.Patcher
             // 
             this.patchtool.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.patchtool.Enabled = false;
-            this.patchtool.Image = global::Oxide.Patcher.Properties.Resources.wand;
+            this.patchtool.Image = global::Umod.Patcher.Properties.Resources.wand;
             this.patchtool.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.patchtool.Name = "patchtool";
             this.patchtool.Size = new System.Drawing.Size(23, 22);
@@ -327,7 +327,7 @@ namespace Oxide.Patcher
             // openprojectdialog
             // 
             this.openprojectdialog.DefaultExt = "opj";
-            this.openprojectdialog.Filter = "Oxide project|*.opj";
+            this.openprojectdialog.Filter = "uMod project|*.opj";
             this.openprojectdialog.Title = "Open Project";
             // 
             // unloadedassemblymenu
@@ -500,7 +500,7 @@ namespace Oxide.Patcher
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.mainmenu;
             this.Name = "PatcherForm";
-            this.Text = "Oxide Patcher - Version {0}";
+            this.Text = "uMod Patcher - Version {0}";
             this.mainmenu.ResumeLayout(false);
             this.mainmenu.PerformLayout();
             this.maintoolbar.ResumeLayout(false);

@@ -2,16 +2,16 @@
 using Mono.Cecil.Cil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Oxide.Patcher.Patching;
-using Oxide.Patcher.Views;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Umod.Patcher.Patching;
+using Umod.Patcher.Views;
 
-namespace Oxide.Patcher.Hooks
+namespace Umod.Patcher.Hooks
 {
     [HookType("Modify")]
     public class Modify : Hook

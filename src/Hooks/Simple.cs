@@ -1,14 +1,14 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Oxide.Patcher.Patching;
-using Oxide.Patcher.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Umod.Patcher.Patching;
+using Umod.Patcher.Views;
 using AssemblyDefinition = Mono.Cecil.AssemblyDefinition;
 using TypeDefinition = Mono.Cecil.TypeDefinition;
 
-namespace Oxide.Patcher.Hooks
+namespace Umod.Patcher.Hooks
 {
     public enum ReturnBehavior { Continue, ExitWhenValidType, ModifyRefArg, UseArgumentString }
 
@@ -44,7 +44,7 @@ namespace Oxide.Patcher.Hooks
         {
             // Get the call hook method (only grab object parameters: ignore the object[] hook)
             List<MethodDefinition> callhookmethods = oxideassembly.MainModule.Types
-                .Single(t => t.FullName == "Oxide.Core.Interface")
+                .Single(t => t.FullName == "Umod.Interface")
                 .Methods.Where(m => m.IsStatic && m.Name == "CallHook" && m.HasParameters && m.Parameters.Any(p => p.ParameterType.IsArray) == false)
                 .OrderBy(x => x.Parameters.Count)
                 .ToList();

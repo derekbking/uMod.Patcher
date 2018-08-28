@@ -1,5 +1,4 @@
-﻿using Oxide.Patcher.Hooks;
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -7,8 +6,9 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Umod.Patcher.Hooks;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     internal static class Program
     {
@@ -27,7 +27,7 @@ namespace Oxide.Patcher
 
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args1) =>
             {
-                string resourceName = "Oxide.Patcher.Dependencies." + new AssemblyName(args1.Name).Name + ".dll";
+                string resourceName = "Umod.Patcher.Dependencies." + new AssemblyName(args1.Name).Name + ".dll";
                 if (resourceName.Contains("resources.dll"))
                 {
                     return null;
@@ -50,7 +50,7 @@ namespace Oxide.Patcher
             else
             {
                 bool console = false;
-                string filename = "Rust.opj";
+                string filename = "Game.opj";
                 bool unflagAll = false;
                 string targetOverride = "";
                 string error = "";

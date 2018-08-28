@@ -1,8 +1,8 @@
-﻿using Oxide.Patcher.Fields;
+﻿using Umod.Patcher.Fields;
 using System;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher.Views
+namespace Umod.Patcher.Views
 {
     public partial class FieldSettingsControl : UserControl
     {

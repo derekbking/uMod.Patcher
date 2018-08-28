@@ -1,12 +1,12 @@
 ﻿using Newtonsoft.Json;
-using Oxide.Patcher.Fields;
-using Oxide.Patcher.Hooks;
-using Oxide.Patcher.Modifiers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Umod.Patcher.Fields;
+using Umod.Patcher.Hooks;
+using Umod.Patcher.Modifiers;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     /// <summary>
     /// A set of changes to make to an assembly

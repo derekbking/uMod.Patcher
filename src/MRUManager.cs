@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     public class MRUManager
     {

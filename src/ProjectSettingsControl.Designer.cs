@@ -1,4 +1,4 @@
-﻿namespace Oxide.Patcher
+﻿namespace Umod.Patcher
 {
     partial class ProjectSettingsControl
     {
@@ -137,7 +137,7 @@
             this.nametextbox.Name = "nametextbox";
             this.nametextbox.Size = new System.Drawing.Size(393, 20);
             this.nametextbox.TabIndex = 3;
-            this.nametextbox.Text = "Untitled Oxide Project";
+            this.nametextbox.Text = "Untitled uMod Game";
             // 
             // selectdirectorybutton
             // 

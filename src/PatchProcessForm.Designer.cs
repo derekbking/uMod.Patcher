@@ -1,4 +1,4 @@
-﻿namespace Oxide.Patcher
+﻿namespace Umod.Patcher
 {
     partial class PatchProcessForm
     {
@@ -140,7 +140,7 @@
             this.MinimizeBox = false;
             this.Name = "PatchProcessForm";
             this.Padding = new System.Windows.Forms.Padding(5);
-            this.Text = "Oxide Patch Process";
+            this.Text = "uMod Patch Process";
             this.panel1.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();

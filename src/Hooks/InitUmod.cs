@@ -1,17 +1,17 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Oxide.Patcher.Patching;
-using Oxide.Patcher.Views;
 using System;
 using System.Linq;
+using Umod.Patcher.Patching;
+using Umod.Patcher.Views;
 
-namespace Oxide.Patcher.Hooks
+namespace Umod.Patcher.Hooks
 {
     /// <summary>
     /// The initialization hook that loads Oxide
     /// </summary>
-    [HookType("Initialize Oxide")]
-    public class InitOxide : Hook
+    [HookType("Initialize uMod")]
+    public class InitUmod : Hook
     {
         /// <summary>
         /// Gets or sets the instruction index to inject the hook call at
@@ -20,8 +20,8 @@ namespace Oxide.Patcher.Hooks
 
         public override bool ApplyPatch(MethodDefinition original, ILWeaver weaver, AssemblyDefinition oxideassembly, Patching.Patcher patcher = null)
         {
-            MethodDefinition initoxidemethod = oxideassembly.MainModule.Types
-                .Single(t => t.FullName == "Oxide.Core.Interface")
+            MethodDefinition initumodmethod = oxideassembly.MainModule.Types
+                .Single(t => t.FullName == "Umod.Interface")
                 .Methods.Single(m => m.IsStatic && m.Name == "Initialize");
 
             // Start injecting where requested
@@ -40,7 +40,7 @@ namespace Oxide.Patcher.Hooks
             }
 
             // Load the hook name
-            Instruction firstinjected = weaver.Add(Instruction.Create(OpCodes.Call, weaver.Module.Import(initoxidemethod)));
+            Instruction firstinjected = weaver.Add(Instruction.Create(OpCodes.Call, weaver.Module.Import(initumodmethod)));
 
             // Find all instructions which pointed to the existing and redirect them
             for (int i = 0; i < weaver.Instructions.Count; i++)
@@ -61,7 +61,7 @@ namespace Oxide.Patcher.Hooks
 
         public override HookSettingsControl CreateSettingsView()
         {
-            return new InitOxideHookSettingsControl { Hook = this };
+            return new InitUmodHookSettingsControl { Hook = this };
         }
     }
 }

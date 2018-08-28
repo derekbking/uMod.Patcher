@@ -1,9 +1,9 @@
 ﻿using Mono.Cecil;
-using Oxide.Patcher.Hooks;
+using Umod.Patcher.Hooks;
 using System;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher.Views
+namespace Umod.Patcher.Views
 {
     public partial class ModifyHookSettingsControl : HookSettingsControl
     {

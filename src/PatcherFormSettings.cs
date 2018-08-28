@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     /// <summary>
     /// A set of persistent window settings

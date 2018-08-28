@@ -1,10 +1,10 @@
 ﻿using Mono.Cecil;
-using Oxide.Patcher.Views;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Umod.Patcher.Views;
 
-namespace Oxide.Patcher.Fields
+namespace Umod.Patcher.Fields
 {
     public enum Exposure { Private, Protected, Public, Internal, Static, Null }
 

@@ -1,14 +1,14 @@
 ﻿using System;
 
-using Oxide.Patcher.Hooks;
+using Umod.Patcher.Hooks;
 
-namespace Oxide.Patcher.Views
+namespace Umod.Patcher.Views
 {
-    public partial class InitOxideHookSettingsControl : HookSettingsControl
+    public partial class InitUmodHookSettingsControl : HookSettingsControl
     {
         private bool ignorechanges;
 
-        public InitOxideHookSettingsControl()
+        public InitUmodHookSettingsControl()
         {
             InitializeComponent();
         }
@@ -17,7 +17,7 @@ namespace Oxide.Patcher.Views
         {
             base.OnLoad(e);
 
-            InitOxide hook = Hook as InitOxide;
+            InitUmod hook = Hook as InitUmod;
 
             ignorechanges = true;
             injectionindex.Value = hook.InjectionIndex;
@@ -31,7 +31,7 @@ namespace Oxide.Patcher.Views
                 return;
             }
 
-            InitOxide hook = Hook as InitOxide;
+            InitUmod hook = Hook as InitUmod;
             hook.InjectionIndex = (int)injectionindex.Value;
             NotifyChanges();
         }

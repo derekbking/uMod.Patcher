@@ -1,8 +1,8 @@
 ﻿using ICSharpCode.TextEditor;
 using ICSharpCode.TextEditor.Document;
 using Mono.Cecil;
-using Oxide.Patcher.Hooks;
-using Oxide.Patcher.Patching;
+using Umod.Patcher.Hooks;
+using Umod.Patcher.Patching;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher.Views
+namespace Umod.Patcher.Views
 {
     public partial class HookViewControl : UserControl
     {
@@ -196,7 +196,7 @@ namespace Oxide.Patcher.Views
 
         private void deletebutton_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to remove this hook?", "Oxide Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to remove this hook?", "uMod Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (result == DialogResult.Yes)
             {
                 MainForm.RemoveHook(Hook);
@@ -242,7 +242,7 @@ namespace Oxide.Patcher.Views
                 return;
             }
 
-            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to change the type of this hook? Any hook settings will be lost.", "Oxide Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to change the type of this hook? Any hook settings will be lost.", "uMod Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (result == DialogResult.Yes)
             {
                 MainForm.RemoveHook(Hook);
@@ -324,7 +324,7 @@ namespace Oxide.Patcher.Views
             }
             if (!Hook.BaseHook.Name.Equals(hookName))
             {
-                MessageBox.Show(MainForm, "Base Hook not found!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(MainForm, "Base Hook not found!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

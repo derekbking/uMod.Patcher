@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     public partial class NewProjectForm : Form
     {
@@ -30,7 +30,7 @@ namespace Oxide.Patcher
             {
                 if (!Directory.EnumerateFiles(selectdirectorydialog.SelectedPath).Any(x => x.EndsWith(".dll") || x.EndsWith(".exe")))
                 {
-                    if (MessageBox.Show(this, "The specified directory does not contain any dll files. Continue anyway?", "Oxide Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                    if (MessageBox.Show(this, "The specified directory does not contain any dll files. Continue anyway?", "uMod Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                     {
                         return;
                     }
@@ -71,19 +71,19 @@ namespace Oxide.Patcher
             // Verify
             if (!Directory.Exists(directorytextbox.Text))
             {
-                MessageBox.Show(this, "The target directory is invalid.", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "The target directory is invalid.", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             if (!Directory.Exists(Path.GetDirectoryName(filenametextbox.Text)))
             {
-                MessageBox.Show(this, "The filename is invalid.", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "The filename is invalid.", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             if (nametextbox.TextLength == 0)
             {
-                MessageBox.Show(this, "The project name is invalid.", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "The project name is invalid.", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

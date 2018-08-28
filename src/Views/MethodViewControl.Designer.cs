@@ -1,4 +1,4 @@
-﻿namespace Oxide.Patcher
+﻿namespace Umod.Patcher
 {
     partial class MethodViewControl
     {

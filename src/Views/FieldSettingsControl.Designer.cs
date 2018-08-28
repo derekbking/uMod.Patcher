@@ -1,4 +1,4 @@
-﻿namespace Oxide.Patcher.Views
+﻿namespace Umod.Patcher.Views
 {
     partial class FieldSettingsControl
     {

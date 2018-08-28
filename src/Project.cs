@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     /// <summary>
     /// An Oxide patcher project

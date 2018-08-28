@@ -1,8 +1,8 @@
-﻿using Oxide.Patcher.Modifiers;
+﻿using Umod.Patcher.Modifiers;
 using System;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher.Views
+namespace Umod.Patcher.Views
 {
     public partial class ModifierViewControl : UserControl
     {
@@ -105,7 +105,7 @@ namespace Oxide.Patcher.Views
 
         private void deletebutton_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to remove these modifier changes?", "Oxide Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to remove these modifier changes?", "uMod Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (result == DialogResult.Yes)
             {
                 MainForm.RemoveModifier(Modifier);

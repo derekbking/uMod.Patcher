@@ -1,10 +1,4 @@
 ﻿using Mono.Cecil;
-using Oxide.Patcher.Deobfuscation;
-using Oxide.Patcher.Fields;
-using Oxide.Patcher.Hooks;
-using Oxide.Patcher.Modifiers;
-using Oxide.Patcher.Patching;
-using Oxide.Patcher.Views;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,8 +9,14 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Umod.Patcher.Deobfuscation;
+using Umod.Patcher.Fields;
+using Umod.Patcher.Hooks;
+using Umod.Patcher.Modifiers;
+using Umod.Patcher.Patching;
+using Umod.Patcher.Views;
 
-namespace Oxide.Patcher
+namespace Umod.Patcher
 {
     public partial class PatcherForm : Form
     {
@@ -100,17 +100,17 @@ namespace Oxide.Patcher
             base.OnLoad(e);
 
             // Load oxide
-            string oxidefilename = Path.Combine(Application.StartupPath, "Oxide.Core.dll");
+            string oxidefilename = Path.Combine(Application.StartupPath, "Umod.dll");
             if (!File.Exists(oxidefilename))
             {
-                MessageBox.Show("Failed to locate Oxide.Core.dll!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to locate Umod.dll!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Environment.Exit(0);
                 return;
             }
             OxideAssembly = AssemblyDefinition.ReadAssembly(oxidefilename);
 
             // Load MRU
-            mruManager = new MRUManager(recentprojects, "Oxide.Patcher", 10, openrecentproject_Click);
+            mruManager = new MRUManager(recentprojects, "Umod.Patcher", 10, openrecentproject_Click);
 
             // Load settings
             // CurrentSettings = PatcherFormSettings.Load();
@@ -797,7 +797,7 @@ namespace Oxide.Patcher
             if (deob != null)
             {
                 DialogResult result = MessageBox.Show(this,
-                    $"Assembly '{assembly.MainModule.Name}' appears to be obfuscated using '{deob.Name}', attempt to deobfuscate?", "Oxide Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+                    $"Assembly '{assembly.MainModule.Name}' appears to be obfuscated using '{deob.Name}', attempt to deobfuscate?", "uMod Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
                 if (result == DialogResult.Yes)
                 {
                     // Deobfuscate
@@ -813,7 +813,7 @@ namespace Oxide.Patcher
                         return;
                     }
 
-                    MessageBox.Show(this, "Deobfuscation failed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Deobfuscation failed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             File.Copy(oldfile, newfile);
@@ -1344,66 +1344,66 @@ namespace Oxide.Patcher
                 CurrentProject.Save(CurrentProjectFilename);
                 if (missingassemblies > 1)
                 {
-                    MessageBox.Show(this, $"{missingassemblies} assemblies are missing from the target directory!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{missingassemblies} assemblies are missing from the target directory!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (missingassemblies == 1)
                 {
-                    MessageBox.Show(this, $"{missingassemblies} assembly is missing from the target directory!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{missingassemblies} assembly is missing from the target directory!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (missingmethods > 1)
                 {
-                    MessageBox.Show(this, $"{missingmethods} methods referenced by hooks no longer exist!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{missingmethods} methods referenced by hooks no longer exist!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (missingmethods == 1)
                 {
-                    MessageBox.Show(this, $"{missingmethods} method referenced by hooks no longer exists!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{missingmethods} method referenced by hooks no longer exists!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (changedmethods > 1)
                 {
-                    MessageBox.Show(this, $"{changedmethods} methods referenced by hooks have changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedmethods} methods referenced by hooks have changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (changedmethods == 1)
                 {
-                    MessageBox.Show(this, $"{changedmethods} method referenced by hooks has changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedmethods} method referenced by hooks has changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (changedfields > 1)
                 {
-                    MessageBox.Show(this, $"{changedfields} fields with altered modifiers have changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedfields} fields with altered modifiers have changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (changedfields == 1)
                 {
-                    MessageBox.Show(this, $"{changedfields} field with altered modifiers has changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedfields} field with altered modifiers has changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (changedmodmethods > 1)
                 {
-                    MessageBox.Show(this, $"{changedmodmethods} methods with altered modifiers have changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedmodmethods} methods with altered modifiers have changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (changedmodmethods == 1)
                 {
-                    MessageBox.Show(this, $"{changedmodmethods} method with altered modifiers has changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedmodmethods} method with altered modifiers has changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (changedproperties > 1)
                 {
-                    MessageBox.Show(this, $"{changedproperties} properties with altered modifiers have changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedproperties} properties with altered modifiers have changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (changedproperties == 1)
                 {
-                    MessageBox.Show(this, $"{changedproperties} property with altered modifiers has changed!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changedproperties} property with altered modifiers has changed!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 if (changednewfields > 1)
                 {
-                    MessageBox.Show(this, $"{changednewfields} new fields were flagged!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changednewfields} new fields were flagged!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (changednewfields == 1)
                 {
-                    MessageBox.Show(this, $"{changednewfields} new field was flagged!", "Oxide Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, $"{changednewfields} new field was flagged!", "uMod Patcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

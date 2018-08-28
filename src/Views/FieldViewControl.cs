@@ -1,8 +1,8 @@
-﻿using Oxide.Patcher.Fields;
+﻿using Umod.Patcher.Fields;
 using System;
 using System.Windows.Forms;
 
-namespace Oxide.Patcher.Views
+namespace Umod.Patcher.Views
 {
     public partial class FieldViewControl : UserControl
     {
@@ -64,7 +64,7 @@ namespace Oxide.Patcher.Views
 
         private void deletebutton_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to remove this field?", "Oxide Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult result = MessageBox.Show(MainForm, "Are you sure you want to remove this field?", "uMod Patcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (result == DialogResult.Yes)
             {
                 MainForm.RemoveField(Field);

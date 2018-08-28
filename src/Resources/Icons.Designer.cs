@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Oxide.Patcher.Resources {
+namespace Umod.Patcher.Resources {
     using System;
     
     

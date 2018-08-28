@@ -1,6 +1,6 @@
-﻿namespace Oxide.Patcher.Views
+﻿namespace Umod.Patcher.Views
 {
-	partial class InitOxideHookSettingsControl
+	partial class InitUmodHookSettingsControl
     {
         /// <summary> 
         /// Required designer variable.
@@ -74,12 +74,12 @@
             this.injectionindex.TabIndex = 6;
             this.injectionindex.ValueChanged += new System.EventHandler(this.injectionindex_ValueChanged);
             // 
-            // InitOxideHookSettingsControl
+            // InitUmodHookSettingsControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.tableLayoutPanel1);
-            this.Name = "InitOxideHookSettingsControl";
+            this.Name = "InitUmodHookSettingsControl";
             this.Size = new System.Drawing.Size(415, 198);
             this.tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.injectionindex)).EndInit();

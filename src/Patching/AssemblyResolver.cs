@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace Oxide.Patcher.Patching
+namespace Umod.Patcher.Patching
 {
     /// <summary>
     /// Allows Mono.Cecil to locate assemblies when trying to build references
